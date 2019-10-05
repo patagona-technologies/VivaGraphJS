@@ -1,19 +1,13 @@
-/**
- * @fileOverview Defines a graph renderer that uses CSS based drawings.
- *
- * @author Andrei Kashcha (aka anvaka) / https://github.com/anvaka
- */
-
 module.exports = renderer;
 
-var eventify = require('ngraph.events');
-var forceDirected = require('ngraph.forcelayout');
-var svgGraphics = require('./svgGraphics.js');
-var windowEvents = require('../Utils/windowEvents.js');
-var domInputManager = require('../Input/domInputManager.js');
-var timer = require('../Utils/timer.js');
-var getDimension = require('../Utils/getDimensions.js');
-var dragndrop = require('../Input/dragndrop.js');
+var eventify = require("ngraph.events");
+var forceDirected = require("ngraph.forcelayout");
+var svgGraphics = require("./svgGraphics.js");
+var windowEvents = require("../Utils/windowEvents.js");
+var domInputManager = require("../Input/domInputManager.js");
+var timer = require("../Utils/timer.js");
+var getDimension = require("../Utils/getDimensions.js");
+var dragndrop = require("../Input/dragndrop.js");
 
 /**
  * This is heart of the rendering. Class accepts graph to be rendered and rendering settings.
@@ -38,7 +32,7 @@ var dragndrop = require('../Input/dragndrop.js');
  *
  *     // Layout algorithm to be used. The algorithm is expected to comply with defined
  *     // interface and is expected to be iterative. Renderer will use it then to calculate
- *     // graph's layout. For examples of the interface refer to Viva.Graph.Layout.forceDirected()
+ *     // grpaph's layout. For examples of the interface refer to Viva.Graph.Layout.forceDirected()
  *     layout : Viva.Graph.Layout.forceDirected(),
  *
  *     // Directs renderer to display links. Usually rendering links is the slowest part of this
@@ -61,22 +55,20 @@ function renderer(graph, settings) {
   var layout = settings.layout,
     graphics = settings.graphics,
     container = settings.container,
-    interactive = settings.interactive !== undefined ? settings.interactive : true,
+    interactive =
+      settings.interactive !== undefined ? settings.interactive : true,
     inputManager,
     animationTimer,
     rendererInitialized = false,
     updateCenterRequired = true,
-
     isStable = false,
     userInteraction = false,
     isPaused = false,
-
     transform = {
       offsetX: 0,
       offsetY: 0,
       scale: 1
     },
-
     publicEvents = eventify({}),
     containerDrag;
 
@@ -91,7 +83,6 @@ function renderer(graph, settings) {
      * graph renderer will give run more iterations to reflect changes.
      */
     run: function(iterationsCount) {
-
       if (!rendererInitialized) {
         prepareSettings();
         prerender();
@@ -125,7 +116,7 @@ function renderer(graph, settings) {
     },
 
     rerender: function() {
-      renderGraph();
+      renderGraph(true);
       return this;
     },
 
@@ -148,7 +139,10 @@ function renderer(graph, settings) {
      * Centers renderer at x,y graph's coordinates
      */
     moveTo: function(x, y) {
-      graphics.graphCenterChanged(transform.offsetX - x * transform.scale, transform.offsetY - y * transform.scale);
+      graphics.graphCenterChanged(
+        transform.offsetX - x * transform.scale,
+        transform.offsetY - y * transform.scale
+      );
       renderGraph();
     },
 
@@ -157,13 +151,6 @@ function renderer(graph, settings) {
      */
     getGraphics: function() {
       return graphics;
-    },
-    
-    /**
-     * Gets current layout.
-     */
-    getLayout: function() {
-      return layout;
     },
 
     /**
@@ -188,9 +175,9 @@ function renderer(graph, settings) {
    * Checks whether given interaction (node/scroll) is enabled
    */
   function isInteractive(interactionName) {
-    if (typeof interactive === 'string') {
+    if (typeof interactive === "string") {
       return interactive.indexOf(interactionName) >= 0;
-    } else if (typeof interactive === 'boolean') {
+    } else if (typeof interactive === "boolean") {
       return interactive;
     }
     return true; // default setting
@@ -198,15 +185,19 @@ function renderer(graph, settings) {
 
   function prepareSettings() {
     container = container || window.document.body;
-    layout = layout || forceDirected(graph, {
-      springLength: 80,
-      springCoeff: 0.0002,
-    });
-    graphics = graphics || svgGraphics(graph, {
-      container: container
-    });
+    layout =
+      layout ||
+      forceDirected(graph, {
+        springLength: 80,
+        springCoeff: 0.0002
+      });
+    graphics =
+      graphics ||
+      svgGraphics(graph, {
+        container: container
+      });
 
-    if (!settings.hasOwnProperty('renderLinks')) {
+    if (!settings.hasOwnProperty("renderLinks")) {
       settings.renderLinks = true;
     }
 
@@ -214,14 +205,19 @@ function renderer(graph, settings) {
     inputManager = (graphics.inputManager || domInputManager)(graph, graphics);
   }
 
-  function renderGraph() {
+  function renderGraph(recompute = false) {
     graphics.beginRender();
-
+    // TODO: Don't render links and nodes after first render??
     // todo: move this check graphics
-    if (settings.renderLinks) {
-      graphics.renderLinks();
+
+    if (recompute) {
+      // renderLinks and render Nodes only position vertices
+      if (settings.renderLinks) {
+        graphics.renderLinks();
+      }
+      graphics.renderNodes();
     }
-    graphics.renderNodes();
+    // End render actually renders
     graphics.endRender();
   }
 
@@ -264,7 +260,7 @@ function renderer(graph, settings) {
   function prerender() {
     // To get good initial positions for the graph
     // perform several prerender steps in background.
-    if (typeof settings.prerender === 'number' && settings.prerender > 0) {
+    if (typeof settings.prerender === "number" && settings.prerender > 0) {
       for (var i = 0; i < settings.prerender; i += 1) {
         layout.step();
       }
@@ -303,7 +299,7 @@ function renderer(graph, settings) {
   }
 
   function listenNodeEvents(node) {
-    if (!isInteractive('node')) {
+    if (!isInteractive("node")) {
       return;
     }
 
@@ -319,13 +315,15 @@ function renderer(graph, settings) {
       },
       onDrag: function(e, offset) {
         var oldPos = layout.getNodePosition(node.id);
-        layout.setNodePosition(node.id,
+        layout.setNodePosition(
+          node.id,
           oldPos.x + offset.x / transform.scale,
-          oldPos.y + offset.y / transform.scale);
+          oldPos.y + offset.y / transform.scale
+        );
 
         userInteraction = true;
 
-        renderGraph();
+        renderGraph(true);
       },
       onStop: function() {
         layout.pinNode(node, wasPinned);
@@ -355,19 +353,19 @@ function renderer(graph, settings) {
   function processNodeChange(change) {
     var node = change.node;
 
-    if (change.changeType === 'add') {
+    if (change.changeType === "add") {
       createNodeUi(node);
       listenNodeEvents(node);
       if (updateCenterRequired) {
         updateCenter();
       }
-    } else if (change.changeType === 'remove') {
+    } else if (change.changeType === "remove") {
       releaseNodeEvents(node);
       removeNodeUi(node);
       if (graph.getNodesCount() === 0) {
         updateCenterRequired = true; // Next time when node is added - center the graph.
       }
-    } else if (change.changeType === 'update') {
+    } else if (change.changeType === "update") {
       releaseNodeEvents(node);
       removeNodeUi(node);
 
@@ -378,16 +376,16 @@ function renderer(graph, settings) {
 
   function processLinkChange(change) {
     var link = change.link;
-    if (change.changeType === 'add') {
+    if (change.changeType === "add") {
       if (settings.renderLinks) {
         createLinkUi(link);
       }
-    } else if (change.changeType === 'remove') {
+    } else if (change.changeType === "remove") {
       if (settings.renderLinks) {
         removeLinkUi(link);
       }
-    } else if (change.changeType === 'update') {
-      throw 'Update type is not implemented. TODO: Implement me!';
+    } else if (change.changeType === "update") {
+      throw "Update type is not implemented. TODO: Implement me!";
     }
   }
 
@@ -418,7 +416,7 @@ function renderer(graph, settings) {
   }
 
   function releaseGraphEvents() {
-    graph.off('changed', onGraphChanged);
+    graph.off("changed", onGraphChanged);
   }
 
   function scale(out, scrollPoint) {
@@ -433,26 +431,26 @@ function renderer(graph, settings) {
     transform.scale = graphics.scale(scaleFactor, scrollPoint);
 
     renderGraph();
-    publicEvents.fire('scale', transform.scale);
+    publicEvents.fire("scale", transform.scale);
 
     return transform.scale;
   }
 
   function listenToEvents() {
-    windowEvents.on('resize', onWindowResized);
+    window.addEventListener("resize", onWindowResized);
 
     releaseContainerDragManager();
-    if (isInteractive('drag')) {
+    if (isInteractive("drag")) {
       containerDrag = dragndrop(container);
       containerDrag.onDrag(function(e, offset) {
         graphics.translateRel(offset.x, offset.y);
 
         renderGraph();
-        publicEvents.fire('drag', offset);
+        publicEvents.fire("drag", offset);
       });
     }
 
-    if (isInteractive('scroll')) {
+    if (isInteractive("scroll")) {
       if (!containerDrag) {
         containerDrag = dragndrop(container);
       }
@@ -464,14 +462,15 @@ function renderer(graph, settings) {
     graph.forEachNode(listenNodeEvents);
 
     releaseGraphEvents();
-    graph.on('changed', onGraphChanged);
+    graph.on("changed", onGraphChanged);
   }
 
   function stopListenToEvents() {
     rendererInitialized = false;
     releaseGraphEvents();
     releaseContainerDragManager();
-    windowEvents.off('resize', onWindowResized);
+    // windowEvents.off("resize", onWindowResized);
+    window.removeEventListener("resize", onWindowResized);
     publicEvents.off();
     animationTimer.stop();
 

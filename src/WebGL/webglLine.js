@@ -1,4 +1,4 @@
-var parseColor = require('./parseColor.js');
+var parseColor = require("./parseColor.js");
 
 module.exports = webglLine;
 
@@ -8,12 +8,15 @@ module.exports = webglLine;
  * figure out how to render it.
  *
  */
-function webglLine(color) {
+function webglLine(color, level = 0, arrow = false) {
   return {
     /**
      * Gets or sets color of the line. If you set this property externally
      * make sure it always come as integer of 0xRRGGBBAA format
      */
+    // Level: discrete curve location, 0 is straight line
+    level: level,
+    arrow: arrow,
     color: parseColor(color)
   };
 }

@@ -57,7 +57,8 @@ Viva.Graph = {
     findElementPosition: require("./Utils/findElementPosition.js"),
     timer: require("./Utils/timer.js"),
     getDimension: require("./Utils/getDimensions.js"),
-    events: require("./Utils/backwardCompatibleEvents.js")
+    events: require("./Utils/backwardCompatibleEvents.js"),
+    geometry: require("./Utils/geometry.js")
   },
 
   Layout: {

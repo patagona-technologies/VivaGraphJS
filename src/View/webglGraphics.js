@@ -233,6 +233,9 @@ function webglGraphics(options) {
      * Called every time when renderer finishes one step of rendering.
      */
     endRender: function() {
+      if (nodesCount > 0) {
+        nodeProgram.render();
+      }
       if (arrowCount > 0) {
         arrowProgram.render();
       }
@@ -243,10 +246,6 @@ function webglGraphics(options) {
 
       if (straightLinksCount > 0) {
         straightLinkProgram.render();
-      }
-
-      if (nodesCount > 0) {
-        nodeProgram.render();
       }
     },
 

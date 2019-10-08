@@ -9,7 +9,7 @@ module.exports = webglSquare;
  * @param size - size of the node in pixels.
  * @param color - color of the node in '#rrggbbaa' or '#rgb' format.
  */
-function webglSquare(size, color) {
+function webglSquare(size, color, depth = 0.9) {
   return {
     /**
      * Gets or sets size of the square side.
@@ -19,6 +19,7 @@ function webglSquare(size, color) {
     /**
      * Gets or sets color of the square.
      */
-    color: parseColor(color)
+    color: parseColor(color),
+    depth: depth
   };
 }

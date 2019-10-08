@@ -13,10 +13,10 @@ module.exports = webglNodeProgram;
  * Defines simple UI for nodes in webgl renderer. Each node is rendered as square. Color and size can be changed.
  */
 function webglNodeProgram(circle = true) {
-  var ATTRIBUTES_PER_PRIMITIVE = 4; // Primitive is point, x, y, size, color
-  // x, y, z - floats, color = uint.
+  var ATTRIBUTES_PER_PRIMITIVE = 5; // Primitive is point, x, y, z, size, color
+  // x, y, z, size - floats, color = uint.
   var BYTES_PER_NODE =
-    3 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT;
+    4 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT;
 
   var nodesFS_a = [
     "#version 300 es",
@@ -43,14 +43,15 @@ function webglNodeProgram(circle = true) {
   var nodesVS = [
     "#version 300 es",
     "in vec3 a_vertexPos;",
+    "in float a_size;",
     "in vec4 a_color;",
     "uniform vec2 u_screenSize;",
     "uniform mat4 u_transform;",
     "out vec4 color;",
 
     "void main(void) {",
-    "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -1.0, 1);",
-    "   gl_PointSize = a_vertexPos.z * u_transform[0][0];",
+    "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -a_vertexPos.z, 1);",
+    "   gl_PointSize = a_size * u_transform[0][0];",
     "   color = a_color.abgr;",
     "}"
   ].join("\n");
@@ -117,12 +118,14 @@ function webglNodeProgram(circle = true) {
     locations = utils.getLocations(program, [
       "a_vertexPos",
       "a_color",
+      "a_size",
       "u_screenSize",
       "u_transform"
     ]);
 
     gl.enableVertexAttribArray(locations.vertexPos);
     gl.enableVertexAttribArray(locations.color);
+    gl.enableVertexAttribArray(locations.size);
 
     buffer = gl.createBuffer();
   }
@@ -132,9 +135,10 @@ function webglNodeProgram(circle = true) {
 
     positions[idx * ATTRIBUTES_PER_PRIMITIVE] = pos.x;
     positions[idx * ATTRIBUTES_PER_PRIMITIVE + 1] = -pos.y;
-    positions[idx * ATTRIBUTES_PER_PRIMITIVE + 2] = nodeUI.size;
+    positions[idx * ATTRIBUTES_PER_PRIMITIVE + 2] = nodeUI.depth;
+    positions[idx * ATTRIBUTES_PER_PRIMITIVE + 3] = nodeUI.size;
 
-    colors[idx * ATTRIBUTES_PER_PRIMITIVE + 3] = nodeUI.color;
+    colors[idx * ATTRIBUTES_PER_PRIMITIVE + 4] = nodeUI.color;
   }
 
   function updateTransform(newTransform) {
@@ -191,12 +195,20 @@ function webglNodeProgram(circle = true) {
       0
     );
     gl.vertexAttribPointer(
+      locations.size,
+      1,
+      gl.FLOAT,
+      false,
+      ATTRIBUTES_PER_PRIMITIVE * Float32Array.BYTES_PER_ELEMENT,
+      3 * 4
+    );
+    gl.vertexAttribPointer(
       locations.color,
       4,
       gl.UNSIGNED_BYTE,
       true,
       ATTRIBUTES_PER_PRIMITIVE * Float32Array.BYTES_PER_ELEMENT,
-      3 * 4
+      4 * 4
     );
 
     gl.drawArrays(gl.POINTS, 0, nodesCount);

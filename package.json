@@ -1,6 +1,6 @@
 {
   "name": "@patagona-technologies/vivagraphjs",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "Graph Drawing Library",
   "main": "src/viva",
   "directories": {

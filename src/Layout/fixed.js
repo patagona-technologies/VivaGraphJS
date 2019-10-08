@@ -6,8 +6,11 @@ function createLayout(graph, positions, settings) {
 
   var nodes = {};
   var edges = {};
-  var width = settings.width / 2;
-  var height = settings.height / 2;
+
+  var nnodes = Object.keys(positions).length;
+
+  var width = Math.sqrt(nnodes / (1 / settings.width));
+  var height = Math.sqrt(nnodes / (1 / settings.width));
 
   var defaultRect = function() {
     return {

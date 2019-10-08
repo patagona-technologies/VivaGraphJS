@@ -37,6 +37,7 @@ function webglGraphics(options) {
       b: 1,
       a: 1
     },
+    depthBuffer: true,
     curveResolution: 10,
     curviness: 0.1,
     arrowSize: 20,
@@ -232,15 +233,18 @@ function webglGraphics(options) {
      * Called every time when renderer finishes one step of rendering.
      */
     endRender: function() {
-      if (straightLinksCount > 0) {
-        straightLinkProgram.render();
-      }
-      if (curvedLinksCount > 0) {
-        curvedLinkProgram.render();
-      }
       if (arrowCount > 0) {
         arrowProgram.render();
       }
+
+      if (curvedLinksCount > 0) {
+        curvedLinkProgram.render();
+      }
+
+      if (straightLinksCount > 0) {
+        straightLinkProgram.render();
+      }
+
       if (nodesCount > 0) {
         nodeProgram.render();
       }
@@ -315,7 +319,6 @@ function webglGraphics(options) {
         straightLinkProgram.createLink(ui);
         straightLinks[uiid] = ui;
       }
-
       allLinks[link.id] = ui;
 
       return ui;
@@ -404,7 +407,8 @@ function webglGraphics(options) {
       resetScaleInternal();
       container.appendChild(graphicsRoot);
 
-      gl = graphicsRoot.getContext("experimental-webgl", contextParameters);
+      // gl = graphicsRoot.getContext("experimental-webgl", contextParameters);
+      gl = graphicsRoot.getContext("webgl2", contextParameters);
       if (!gl) {
         var msg =
           "Could not initialize WebGL. Seems like the browser doesn't support it.";
@@ -420,10 +424,19 @@ function webglGraphics(options) {
         gl.clearColor(color.r, color.g, color.b, color.a);
         // TODO: not the best way, really. Should come up with something better
         // what if we need more updates inside beginRender, like depth buffer?
-        this.beginRender = function() {
-          gl.clear(gl.COLOR_BUFFER_BIT);
-        };
       }
+      if (options.depthBuffer) {
+        gl.enable(gl.DEPTH_TEST);
+      }
+
+      this.beginRender = function() {
+        if (options.clearColor) {
+          gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+        if (options.depthBuffer) {
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+        }
+      };
 
       straightLinkProgram.load(gl);
       straightLinkProgram.updateSize(width / 2, height / 2);

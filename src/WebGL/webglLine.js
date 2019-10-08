@@ -8,15 +8,17 @@ module.exports = webglLine;
  * figure out how to render it.
  *
  */
-function webglLine(color, level = 0, arrow = false) {
+function webglLine(color, level = 0, arrow = false, depth = 0) {
   return {
     /**
      * Gets or sets color of the line. If you set this property externally
      * make sure it always come as integer of 0xRRGGBBAA format
      */
-    // Level: discrete curve location, 0 is straight line
+    // level: discrete curve location, 0 is straight line
     level: level,
     arrow: arrow,
+    // depth: [-1,1] depth value for positioning elements in front of each other
+    depth: depth,
     color: parseColor(color)
   };
 }

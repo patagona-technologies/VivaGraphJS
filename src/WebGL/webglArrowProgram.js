@@ -11,28 +11,31 @@ module.exports = webglArrowProgram;
  * Defines UI for links in webgl renderer.
  */
 function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
-  var ATTRIBUTES_PER_VERTEX = 3, // primitive is Line with two points. Each has x,y and color = 3 * 2 attributes.
+  var ATTRIBUTES_PER_VERTEX = 4, // primitive is Line with two points. Each has x,y,z and color = 3 * 2 attributes.
     ATTRIBUTES_PER_ARROW = ATTRIBUTES_PER_VERTEX * 3, // 3 Vertices make an arrow head
     BYTES_PER_ARROW =
-      3 * (2 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // ((3 vertices) nodes * (x,y + color))
+      3 * (3 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // ((3 vertices) nodes * (x,y + color))
     linksFS = [
+      "#version 300 es",
       "precision mediump float;",
-      "varying vec4 color;",
+      "in vec4 color;",
+      "out vec4 outColor;",
       "void main(void) {",
-      "   gl_FragColor = color;",
+      "   outColor = color;",
       "}"
     ].join("\n"),
     linksVS = [
-      "attribute vec2 a_vertexPos;",
-      "attribute vec4 a_color;",
+      "#version 300 es",
+      "in vec3 a_vertexPos;",
+      "in vec4 a_color;",
 
       "uniform vec2 u_screenSize;",
       "uniform mat4 u_transform;",
 
-      "varying vec4 color;",
+      "out vec4 color;",
 
       "void main(void) {",
-      "   gl_Position = u_transform * vec4(a_vertexPos/u_screenSize, 0.0, 1.0);",
+      "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -a_vertexPos.z, 1.0);",
       "   color = a_color.abgr;",
       "}"
     ].join("\n"),
@@ -88,7 +91,6 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
     position: function(linkUi, fromPos, toPos, nodeSize) {
       var linkIdx = linkUi.arrowId,
         offset = linkIdx * ATTRIBUTES_PER_ARROW;
-
       if (linkUi.level > 0) {
         var ctrlPos = geomUtils.computeControlPoint(
           fromPos,
@@ -126,19 +128,20 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
       // Center vertex
       positions[offset] = centerVert.x;
       positions[offset + 1] = centerVert.y;
-      colors[offset + 2] = linkUi.color;
+      positions[offset + 2] = linkUi.depth;
+      colors[offset + 3] = linkUi.color;
 
       // Right vertex
-      positions[offset + 3] = rightVert.x;
-      positions[offset + 4] = rightVert.y;
-
-      colors[offset + 5] = linkUi.color;
+      positions[offset + 4] = rightVert.x;
+      positions[offset + 5] = rightVert.y;
+      positions[offset + 6] = linkUi.depth;
+      colors[offset + 7] = linkUi.color;
 
       // Left vertex
-      positions[offset + 6] = leftVert.x;
-      positions[offset + 7] = leftVert.y;
-
-      colors[offset + 8] = linkUi.color;
+      positions[offset + 8] = leftVert.x;
+      positions[offset + 9] = leftVert.y;
+      positions[offset + 10] = linkUi.depth;
+      colors[offset + 11] = linkUi.color;
     },
 
     createArrow: function(ui) {
@@ -189,10 +192,10 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
 
       gl.vertexAttribPointer(
         locations.vertexPos,
-        2,
+        3,
         gl.FLOAT,
         false,
-        3 * Float32Array.BYTES_PER_ELEMENT,
+        4 * Float32Array.BYTES_PER_ELEMENT,
         0
       );
       gl.vertexAttribPointer(
@@ -200,8 +203,8 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
         4,
         gl.UNSIGNED_BYTE,
         true,
-        3 * Float32Array.BYTES_PER_ELEMENT,
-        2 * 4
+        4 * Float32Array.BYTES_PER_ELEMENT,
+        3 * 4
       );
       gl.drawArrays(gl.TRIANGLES, 0, arrowCount * 3);
 

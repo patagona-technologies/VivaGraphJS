@@ -19,8 +19,10 @@ function webglNodeProgram(circle = true) {
     3 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT;
 
   var nodesFS_a = [
+    "#version 300 es",
     "precision mediump float;",
-    "varying vec4 color;",
+    "in vec4 color;",
+    "out vec4 outColor;",
 
     "void main(void) {"
   ].join("\n");
@@ -30,7 +32,7 @@ function webglNodeProgram(circle = true) {
     "       discard;",
     "   }"
   ].join("\n");
-  var nodesFS_b = ["   gl_FragColor = color;", "}"].join("\n");
+  var nodesFS_b = ["   outColor = color;", "}"].join("\n");
 
   if (circle) {
     var nodesFS = [nodesFS_a, circleFSSnippet, nodesFS_b].join("\n");
@@ -39,14 +41,15 @@ function webglNodeProgram(circle = true) {
   }
 
   var nodesVS = [
-    "attribute vec3 a_vertexPos;",
-    "attribute vec4 a_color;",
+    "#version 300 es",
+    "in vec3 a_vertexPos;",
+    "in vec4 a_color;",
     "uniform vec2 u_screenSize;",
     "uniform mat4 u_transform;",
-    "varying vec4 color;",
+    "out vec4 color;",
 
     "void main(void) {",
-    "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, 0, 1);",
+    "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -1.0, 1);",
     "   gl_PointSize = a_vertexPos.z * u_transform[0][0];",
     "   color = a_color.abgr;",
     "}"

@@ -1,4 +1,4 @@
-var parseColor = require('./parseColor.js');
+var parseColor = require("./parseColor.js");
 
 module.exports = webglSquare;
 
@@ -14,7 +14,7 @@ function webglSquare(size, color) {
     /**
      * Gets or sets size of the square side.
      */
-    size: typeof size === 'number' ? size : 10,
+    size: typeof size === "number" ? size : 10,
 
     /**
      * Gets or sets color of the square.

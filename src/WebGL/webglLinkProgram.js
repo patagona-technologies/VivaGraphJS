@@ -11,27 +11,30 @@ module.exports = webglLinkProgram;
  * Defines UI for links in webgl renderer.
  */
 function webglLinkProgram() {
-  var ATTRIBUTES_PER_PRIMITIVE = 6, // primitive is Line with two points. Each has x,y and color = 3 * 2 attributes.
+  var ATTRIBUTES_PER_PRIMITIVE = 8, // primitive is Line with two points. Each has x,y,z and color = 3 * 2 attributes.
     BYTES_PER_LINK =
-      2 * (2 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // two nodes * (x, y + color)
+      2 * (3 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // two nodes * (x, y, z + color)
     linksFS = [
+      "#version 300 es",
       "precision mediump float;",
-      "varying vec4 color;",
+      "in vec4 color;",
+      "out vec4 outColor;",
       "void main(void) {",
-      "   gl_FragColor = color;",
+      "   outColor = color;",
       "}"
     ].join("\n"),
     linksVS = [
-      "attribute vec2 a_vertexPos;",
-      "attribute vec4 a_color;",
+      "#version 300 es",
+      "in vec3 a_vertexPos;",
+      "in vec4 a_color;",
 
       "uniform vec2 u_screenSize;",
       "uniform mat4 u_transform;",
 
-      "varying vec4 color;",
+      "out vec4 color;",
 
       "void main(void) {",
-      "   gl_Position = u_transform * vec4(a_vertexPos/u_screenSize, 0.0, 1.0);",
+      "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -a_vertexPos.z, 1.0);",
       "   color = a_color.abgr;",
       "}"
     ].join("\n"),
@@ -90,11 +93,13 @@ function webglLinkProgram() {
         offset = linkIdx * ATTRIBUTES_PER_PRIMITIVE;
       positions[offset] = fromPos.x;
       positions[offset + 1] = fromPos.y;
-      colors[offset + 2] = linkUi.color;
+      positions[offset + 2] = linkUi.depth;
+      colors[offset + 3] = linkUi.color;
 
-      positions[offset + 3] = toPos.x;
-      positions[offset + 4] = toPos.y;
-      colors[offset + 5] = linkUi.color;
+      positions[offset + 4] = toPos.x;
+      positions[offset + 5] = toPos.y;
+      positions[offset + 6] = linkUi.depth;
+      colors[offset + 7] = linkUi.color;
     },
 
     createLink: function(ui) {
@@ -144,10 +149,10 @@ function webglLinkProgram() {
 
       gl.vertexAttribPointer(
         locations.vertexPos,
-        2,
+        3,
         gl.FLOAT,
         false,
-        3 * Float32Array.BYTES_PER_ELEMENT,
+        4 * Float32Array.BYTES_PER_ELEMENT,
         0
       );
       gl.vertexAttribPointer(
@@ -155,8 +160,8 @@ function webglLinkProgram() {
         4,
         gl.UNSIGNED_BYTE,
         true,
-        3 * Float32Array.BYTES_PER_ELEMENT,
-        2 * 4
+        4 * Float32Array.BYTES_PER_ELEMENT,
+        3 * 4
       );
 
       gl.drawArrays(gl.LINES, 0, linksCount * 2);

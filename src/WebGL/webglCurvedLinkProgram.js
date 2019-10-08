@@ -11,30 +11,33 @@ module.exports = webglCurvedLinkProgram;
  * Defines UI for links in webgl renderer.
  */
 function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
-  var ATTRIBUTES_PER_VERTEX = 3, // primitive is Line with two points. Each has x,y and color = 3 * 2 attributes.
+  var ATTRIBUTES_PER_VERTEX = 4, // primitive is Line with two points. Each has x,y,z and color = 4 * 2 attributes.
     SEGMENTS_PER_CURVE = curveResolution,
     ATTRIBUTES_PER_CURVE = (SEGMENTS_PER_CURVE + 1) * ATTRIBUTES_PER_VERTEX,
     BYTES_PER_CURVE =
       (SEGMENTS_PER_CURVE + 1) *
-      (2 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // ((nSegments + 1) nodes * (x,y + color))
+      (3 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT), // ((nSegments + 1) nodes * (x,y,z + color))
     linksFS = [
+      "#version 300 es",
       "precision mediump float;",
-      "varying vec4 color;",
+      "in vec4 color;",
+      "out vec4 outColor;",
       "void main(void) {",
-      "   gl_FragColor = color;",
+      "   outColor = color;",
       "}"
     ].join("\n"),
     linksVS = [
-      "attribute vec2 a_vertexPos;",
-      "attribute vec4 a_color;",
+      "#version 300 es",
+      "in vec3 a_vertexPos;",
+      "in vec4 a_color;",
 
       "uniform vec2 u_screenSize;",
       "uniform mat4 u_transform;",
 
-      "varying vec4 color;",
+      "out vec4 color;",
 
       "void main(void) {",
-      "   gl_Position = u_transform * vec4(a_vertexPos/u_screenSize, 0.0, 1.0);",
+      "   gl_Position = u_transform * vec4(a_vertexPos.xy/u_screenSize, -a_vertexPos.z, 1.0);",
       "   color = a_color.abgr;",
       "}"
     ].join("\n"),
@@ -129,8 +132,9 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
         );
         positions[offset + nodeIdx * ATTRIBUTES_PER_VERTEX] = point.x;
         positions[offset + nodeIdx * ATTRIBUTES_PER_VERTEX + 1] = point.y;
+        positions[offset + nodeIdx * ATTRIBUTES_PER_VERTEX + 2] = linkUi.depth;
 
-        colors[offset + nodeIdx * ATTRIBUTES_PER_VERTEX + 2] = linkUi.color;
+        colors[offset + nodeIdx * ATTRIBUTES_PER_VERTEX + 3] = linkUi.color;
 
         if (nodeIdx < SEGMENTS_PER_CURVE) {
           indices[indexOffset + nodeIdx * 2] = vertexOffset + nodeIdx;
@@ -146,7 +150,6 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
       frontLinkId = ui.id;
     },
 
-    // TODO: Fix remove Link for curves
     removeLink: function(ui) {
       if (linksCount > 0) {
         linksCount -= 1;
@@ -190,10 +193,10 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
 
       gl.vertexAttribPointer(
         locations.vertexPos,
-        2,
+        3,
         gl.FLOAT,
         false,
-        3 * Float32Array.BYTES_PER_ELEMENT,
+        4 * Float32Array.BYTES_PER_ELEMENT,
         0
       );
       gl.vertexAttribPointer(
@@ -201,8 +204,8 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
         4,
         gl.UNSIGNED_BYTE,
         true,
-        3 * Float32Array.BYTES_PER_ELEMENT,
-        2 * 4
+        4 * Float32Array.BYTES_PER_ELEMENT,
+        3 * 4
       );
 
       gl.drawElements(

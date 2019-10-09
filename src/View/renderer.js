@@ -115,8 +115,8 @@ function renderer(graph, settings) {
       animationTimer.restart();
     },
 
-    rerender: function() {
-      renderGraph(true);
+    rerender: function(recompute = true) {
+      renderGraph(recompute);
       return this;
     },
 

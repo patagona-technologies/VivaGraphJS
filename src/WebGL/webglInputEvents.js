@@ -1,4 +1,5 @@
-var documentEvents = require('../Utils/documentEvents.js');
+var documentEvents = require("../Utils/documentEvents.js");
+var onClap = require("../Input/clap.js");
 
 module.exports = webglInputEvents;
 
@@ -21,6 +22,7 @@ function webglInputEvents(webglGraphics) {
     mouseMoveCallback = [],
     clickCallback = [],
     dblClickCallback = [],
+    disposeClick,
     prevSelectStart,
     boundRect;
 
@@ -53,49 +55,49 @@ function webglInputEvents(webglGraphics) {
   }
 
   function dblClick(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       dblClickCallback.push(callback);
     }
     return api;
   }
 
   function click(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       clickCallback.push(callback);
     }
     return api;
   }
 
   function mouseMove(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       mouseMoveCallback.push(callback);
     }
     return api;
   }
 
   function mouseUp(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       mouseUpCallback.push(callback);
     }
     return api;
   }
 
   function mouseDown(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       mouseDownCallback.push(callback);
     }
     return api;
   }
 
   function mouseLeave(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       mouseLeaveCallback.push(callback);
     }
     return api;
   }
 
   function mouseEnter(callback) {
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       mouseEnterCallback.push(callback);
     }
     return api;
@@ -106,8 +108,12 @@ function webglInputEvents(webglGraphics) {
       var pos = nodeUI.position,
         half = nodeUI.size;
 
-      return pos.x - half < x && x < pos.x + half &&
-        pos.y - half < y && y < pos.y + half;
+      return (
+        pos.x - half < x &&
+        x < pos.x + half &&
+        pos.y - half < y &&
+        y < pos.y + half
+      );
     }
 
     return true;
@@ -148,91 +154,86 @@ function webglInputEvents(webglGraphics) {
       lastFound = null,
       lastUpdate = 1,
       lastClickTime = +new Date(),
-
       handleMouseMove = function(e) {
         invoke(mouseMoveCallback, [lastFound, e]);
         pos.x = e.clientX;
         pos.y = e.clientY;
       },
-
       handleMouseUp = function() {
-        documentEvents.off('mousemove', handleMouseMove);
-        documentEvents.off('mouseup', handleMouseUp);
+        documentEvents.off("mousemove", handleMouseMove);
+        documentEvents.off("mouseup", handleMouseUp);
       },
-
       updateBoundRect = function() {
         boundRect = root.getBoundingClientRect();
       };
 
-    window.addEventListener('resize', updateBoundRect);
+    window.addEventListener("resize", updateBoundRect);
     updateBoundRect();
 
     // mouse move inside container serves only to track mouse enter/leave events.
-    root.addEventListener('mousemove',
-      function(e) {
-        if (mouseCapturedNode) {
-          return;
-        }
-        if (lastUpdate++ % 7 === 0) {
-          // since there is no bullet proof method to detect resize
-          // event, we preemptively update the bounding rectangle
-          updateBoundRect();
-          lastUpdate = 1;
-        }
-        var cancelBubble = false,
-          node;
-
-        pos.x = e.clientX - boundRect.left;
-        pos.y = e.clientY - boundRect.top;
-
-        node = getNodeAtClientPos(pos);
-
-        if (node && lastFound !== node) {
-          lastFound = node;
-          cancelBubble = cancelBubble || invoke(mouseEnterCallback, [lastFound]);
-        } else if (node === null && lastFound !== node) {
-          cancelBubble = cancelBubble || invoke(mouseLeaveCallback, [lastFound]);
-          lastFound = null;
-        }
-
-        if (cancelBubble) {
-          stopPropagation(e);
-        }
-      });
-
-    root.addEventListener('mousedown',
-      function(e) {
-        var cancelBubble = false,
-          args;
+    root.addEventListener("mousemove", function(e) {
+      if (mouseCapturedNode) {
+        return;
+      }
+      if (lastUpdate++ % 7 === 0) {
+        // since there is no bullet proof method to detect resize
+        // event, we preemptively update the bounding rectangle
         updateBoundRect();
-        pos.x = e.clientX - boundRect.left;
-        pos.y = e.clientY - boundRect.top;
+        lastUpdate = 1;
+      }
+      var cancelBubble = false,
+        node;
 
-        args = [getNodeAtClientPos(pos), e];
-        if (args[0]) {
-          cancelBubble = invoke(mouseDownCallback, args);
-          // we clicked on a node. Following drag should be handled on document events:
-          documentEvents.on('mousemove', handleMouseMove);
-          documentEvents.on('mouseup', handleMouseUp);
+      pos.x = e.clientX - boundRect.left;
+      pos.y = e.clientY - boundRect.top;
 
-          prevSelectStart = window.document.onselectstart;
+      node = getNodeAtClientPos(pos);
 
-          window.document.onselectstart = handleDisabledEvent;
+      if (node && lastFound !== node) {
+        lastFound = node;
+        cancelBubble = cancelBubble || invoke(mouseEnterCallback, [lastFound]);
+      } else if (node === null && lastFound !== node) {
+        cancelBubble = cancelBubble || invoke(mouseLeaveCallback, [lastFound]);
+        lastFound = null;
+      }
 
-          lastFound = args[0];
-        } else {
-          lastFound = null;
-        }
-        if (cancelBubble) {
-          stopPropagation(e);
-        }
-      });
+      if (cancelBubble) {
+        stopPropagation(e);
+      }
+    });
 
-    root.addEventListener('mouseup',
+    root.addEventListener("mousedown", function(e) {
+      var cancelBubble = false,
+        args;
+      updateBoundRect();
+      pos.x = e.clientX - boundRect.left;
+      pos.y = e.clientY - boundRect.top;
+
+      args = [getNodeAtClientPos(pos), e];
+      if (args[0]) {
+        cancelBubble = invoke(mouseDownCallback, args);
+        // we clicked on a node. Following drag should be handled on document events:
+        documentEvents.on("mousemove", handleMouseMove);
+        documentEvents.on("mouseup", handleMouseUp);
+
+        prevSelectStart = window.document.onselectstart;
+
+        window.document.onselectstart = handleDisabledEvent;
+
+        lastFound = args[0];
+      } else {
+        lastFound = null;
+      }
+      if (cancelBubble) {
+        stopPropagation(e);
+      }
+    });
+
+    disposeClick = onClap(
+      root,
       function(e) {
         var clickTime = +new Date(),
           args;
-
         pos.x = e.clientX - boundRect.left;
         pos.y = e.clientY - boundRect.top;
 
@@ -253,6 +254,8 @@ function webglInputEvents(webglGraphics) {
             stopPropagation(e);
           }
         }
-      });
+      },
+      this
+    );
   }
 }

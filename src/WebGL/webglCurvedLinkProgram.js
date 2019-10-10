@@ -101,14 +101,11 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
         "u_transform"
       ]);
 
-      gl.enableVertexAttribArray(locations.vertexPos);
-      gl.enableVertexAttribArray(locations.color);
-
       buffer = gl.createBuffer();
       indicesBuffer = gl.createBuffer();
     },
 
-    position: function(linkUi, fromPos, toPos) {
+    position: function(linkUi, fromPos, toPos, nodeSize) {
       var linkIdx = linkUi.id,
         offset = linkIdx * ATTRIBUTES_PER_CURVE,
         vertexOffset = linkIdx * (SEGMENTS_PER_CURVE + 1),
@@ -122,6 +119,9 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
         curviness
       );
       // Shouldn't need to recompute bezier... Just scale, translate
+      var dir = geomUtils.normalized_direction(ctrlPos, toPos);
+      toPos.x = toPos.x - (dir.x * nodeSize) / 2;
+      toPos.y = toPos.y - (dir.y * nodeSize) / 2;
 
       for (var nodeIdx = 0; nodeIdx < SEGMENTS_PER_CURVE + 1; nodeIdx++) {
         var point = geomUtils.sampleBezier(
@@ -178,6 +178,9 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
     },
 
     render: function() {
+      gl.enableVertexAttribArray(locations.vertexPos);
+      gl.enableVertexAttribArray(locations.color);
+
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, storage, gl.DYNAMIC_DRAW);

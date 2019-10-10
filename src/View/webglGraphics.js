@@ -233,9 +233,6 @@ function webglGraphics(options) {
      * Called every time when renderer finishes one step of rendering.
      */
     endRender: function() {
-      if (nodesCount > 0) {
-        nodeProgram.render();
-      }
       if (arrowCount > 0) {
         arrowProgram.render();
       }
@@ -246,6 +243,10 @@ function webglGraphics(options) {
 
       if (straightLinksCount > 0) {
         straightLinkProgram.render();
+      }
+
+      if (nodesCount > 0) {
+        nodeProgram.render();
       }
     },
 
@@ -414,6 +415,7 @@ function webglGraphics(options) {
         window.alert(msg);
         throw msg;
       }
+
       if (options.enableBlending) {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.enable(gl.BLEND);
@@ -590,7 +592,12 @@ function webglGraphics(options) {
             allNodes[ui.toNodeId].size
           );
         }
-        straightLinkProgram.position(ui, pos.fromPos, pos.toPos);
+        straightLinkProgram.position(
+          ui,
+          pos.fromPos,
+          pos.toPos,
+          allNodes[ui.toNodeId].size
+        );
       }
 
       // Draw Curved Links
@@ -608,7 +615,12 @@ function webglGraphics(options) {
             allNodes[ui.toNodeId].size
           );
         }
-        curvedLinkProgram.position(ui, pos.fromPos, pos.toPos);
+        curvedLinkProgram.position(
+          ui,
+          pos.fromPos,
+          pos.toPos,
+          allNodes[ui.toNodeId].size
+        );
       }
     },
 

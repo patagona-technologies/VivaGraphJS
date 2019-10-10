@@ -82,9 +82,6 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
         "u_transform"
       ]);
 
-      gl.enableVertexAttribArray(locations.vertexPos);
-      gl.enableVertexAttribArray(locations.color);
-
       buffer = gl.createBuffer();
     },
 
@@ -98,13 +95,7 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
           linkUi.level,
           curviness
         );
-        var bezierPoint = geomUtils.sampleBezier(
-          fromPos,
-          ctrlPos,
-          toPos,
-          (curveResolution - 1) / curveResolution
-        );
-        var dir = geomUtils.normalized_direction(bezierPoint, toPos);
+        var dir = geomUtils.normalized_direction(ctrlPos, toPos);
       } else {
         var dir = geomUtils.normalized_direction(fromPos, toPos);
       }
@@ -180,6 +171,9 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
     },
 
     render: function() {
+      gl.enableVertexAttribArray(locations.vertexPos);
+      gl.enableVertexAttribArray(locations.color);
+
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, storage, gl.DYNAMIC_DRAW);

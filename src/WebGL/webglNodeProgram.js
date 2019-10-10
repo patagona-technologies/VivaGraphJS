@@ -6,38 +6,53 @@
  */
 
 var glUtils = require("./webgl.js");
+var createCircleTexture = require("./webglCircleTexture.js");
 
 module.exports = webglNodeProgram;
 
 /**
  * Defines simple UI for nodes in webgl renderer. Each node is rendered as square. Color and size can be changed.
  */
-function webglNodeProgram(circle = true) {
+function webglNodeProgram(node_type = "circle") {
   var ATTRIBUTES_PER_PRIMITIVE = 5; // Primitive is point, x, y, z, size, color
   // x, y, z, size - floats, color = uint.
   var BYTES_PER_NODE =
     4 * Float32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT;
 
-  var nodesFS_a = [
+  var FSPrefix = [
     "#version 300 es",
     "precision mediump float;",
     "in vec4 color;",
-    "out vec4 outColor;",
-
-    "void main(void) {"
+    "out vec4 outColor;"
   ].join("\n");
+
+  var squareFSSnippet = ["void main(void) {", "   outColor = color;", "}"].join(
+    "\n"
+  );
   var circleFSSnippet = [
+    "    float r = 0.0, delta = 0.0, alpha = 1.0;",
+    "void main(void) {",
     "   vec2 circCoord = 2.0 * gl_PointCoord - 1.0;",
-    "   if (dot(circCoord, circCoord) > 1.0) {",
-    "       discard;",
-    "   }"
+    "   r = dot(circCoord, circCoord);",
+    "   delta = fwidth(r);",
+    "   alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, r);",
+    "   outColor = color * alpha;",
+    "}"
   ].join("\n");
-  var nodesFS_b = ["   outColor = color;", "}"].join("\n");
+  var textureFSSnippet = [
+    "uniform sampler2D u_texture;",
+    "void main(void) {",
+    "      vec4 tColor = texture( u_texture, gl_PointCoord );",
+    "  outColor = vec4(color.rgb, tColor.a);",
+    "}"
+  ].join("\n");
 
-  if (circle) {
-    var nodesFS = [nodesFS_a, circleFSSnippet, nodesFS_b].join("\n");
-  } else {
-    var nodesFS = [nodesFS_a, nodesFS_b].join("\n");
+  if (node_type === "circle") {
+    var nodesFS = [FSPrefix, circleFSSnippet].join("\n");
+  } else if (node_type === "square") {
+    var nodesFS = [FSPrefix, squareFSSnippet].join("\n");
+  } else if (node_type === "texture") {
+    var nodesFS = [FSPrefix, textureFSSnippet].join("\n");
   }
 
   var nodesVS = [
@@ -45,8 +60,10 @@ function webglNodeProgram(circle = true) {
     "in vec3 a_vertexPos;",
     "in float a_size;",
     "in vec4 a_color;",
+
     "uniform vec2 u_screenSize;",
     "uniform mat4 u_transform;",
+
     "out vec4 color;",
 
     "void main(void) {",
@@ -69,6 +86,7 @@ function webglNodeProgram(circle = true) {
   var height;
   var transform;
   var sizeDirty;
+  var circleTexture;
 
   return {
     load: load,
@@ -123,11 +141,8 @@ function webglNodeProgram(circle = true) {
       "u_transform"
     ]);
 
-    gl.enableVertexAttribArray(locations.vertexPos);
-    gl.enableVertexAttribArray(locations.color);
-    gl.enableVertexAttribArray(locations.size);
-
     buffer = gl.createBuffer();
+    circleTexture = createCircleTexture(gl);
   }
 
   function position(nodeUI, pos) {
@@ -176,6 +191,10 @@ function webglNodeProgram(circle = true) {
   function replaceProperties(/* replacedNode, newNode */) {}
 
   function render() {
+    gl.enableVertexAttribArray(locations.vertexPos);
+    gl.enableVertexAttribArray(locations.color);
+    gl.enableVertexAttribArray(locations.size);
+
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, storage, gl.DYNAMIC_DRAW);

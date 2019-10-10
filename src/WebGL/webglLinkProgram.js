@@ -82,22 +82,22 @@ function webglLinkProgram() {
         "u_transform"
       ]);
 
-      gl.enableVertexAttribArray(locations.vertexPos);
-      gl.enableVertexAttribArray(locations.color);
-
       buffer = gl.createBuffer();
     },
 
-    position: function(linkUi, fromPos, toPos) {
+    position: function(linkUi, fromPos, toPos, nodeSize) {
       var linkIdx = linkUi.id,
         offset = linkIdx * ATTRIBUTES_PER_PRIMITIVE;
+
+      var dir = geomUtils.normalized_direction(fromPos, toPos);
+
       positions[offset] = fromPos.x;
       positions[offset + 1] = fromPos.y;
       positions[offset + 2] = linkUi.depth;
       colors[offset + 3] = linkUi.color;
 
-      positions[offset + 4] = toPos.x;
-      positions[offset + 5] = toPos.y;
+      positions[offset + 4] = toPos.x - (dir.x * nodeSize) / 2;
+      positions[offset + 5] = toPos.y - (dir.y * nodeSize) / 2;
       positions[offset + 6] = linkUi.depth;
       colors[offset + 7] = linkUi.color;
     },
@@ -137,6 +137,9 @@ function webglLinkProgram() {
     },
 
     render: function() {
+      gl.enableVertexAttribArray(locations.vertexPos);
+      gl.enableVertexAttribArray(locations.color);
+
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, storage, gl.DYNAMIC_DRAW);

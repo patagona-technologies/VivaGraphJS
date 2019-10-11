@@ -8,7 +8,7 @@ var domInputManager = require("../Input/domInputManager.js");
 var timer = require("../Utils/timer.js");
 var getDimension = require("../Utils/getDimensions.js");
 var dragndrop = require("../Input/dragndrop.js");
-
+var makePanzoom = require("panzoom");
 /**
  * This is heart of the rendering. Class accepts graph to be rendered and rendering settings.
  * It monitors graph changes and depicts them accordingly.
@@ -52,25 +52,26 @@ function renderer(graph, settings) {
 
   settings = settings || {};
 
-  var layout = settings.layout,
-    graphics = settings.graphics,
-    container = settings.container,
-    interactive =
-      settings.interactive !== undefined ? settings.interactive : true,
-    inputManager,
-    animationTimer,
-    rendererInitialized = false,
-    updateCenterRequired = true,
-    isStable = false,
-    userInteraction = false,
-    isPaused = false,
-    transform = {
-      offsetX: 0,
-      offsetY: 0,
-      scale: 1
-    },
-    publicEvents = eventify({}),
-    containerDrag;
+  var layout = settings.layout;
+  var graphics = settings.graphics;
+  var container = settings.container;
+  var pixelRatio = window.devicePixelRatio;
+  var interactive =
+    settings.interactive !== undefined ? settings.interactive : true;
+  var inputManager;
+  var animationTimer;
+  var rendererInitialized = false;
+  var updateCenterRequired = true;
+  var isStable = false;
+  var userInteraction = false;
+  var isPaused = false;
+  var transform = {
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1
+  };
+  var publicEvents = eventify({});
+  var containerDrag;
 
   return {
     /**
@@ -436,28 +437,31 @@ function renderer(graph, settings) {
     return transform.scale;
   }
 
+  function graphicsController(canvas, scene) {
+    var controller = {
+      applyTransform(newT) {
+        scene.setTransform(
+          newT.x, // * pixelRatio
+          newT.y, // * pixelRatio
+          newT.scale
+        );
+        renderGraph();
+      },
+      getOwner() {
+        return canvas;
+      }
+    };
+    return controller;
+  }
   function listenToEvents() {
     window.addEventListener("resize", onWindowResized);
+    var canvas = graphics.getCanvas();
 
-    releaseContainerDragManager();
-    if (isInteractive("drag")) {
-      containerDrag = dragndrop(container);
-      containerDrag.onDrag(function(e, offset) {
-        graphics.translateRel(offset.x, offset.y);
-
-        renderGraph();
-        publicEvents.fire("drag", offset);
-      });
-    }
-
-    if (isInteractive("scroll")) {
-      if (!containerDrag) {
-        containerDrag = dragndrop(container);
-      }
-      containerDrag.onScroll(function(e, scaleOffset, scrollPoint) {
-        scale(scaleOffset < 0, scrollPoint);
-      });
-    }
+    makePanzoom(canvas, {
+      controller: graphicsController(canvas, graphics),
+      // smoothScroll: true,
+      maxZoom: 4
+    });
 
     graph.forEachNode(listenNodeEvents);
 

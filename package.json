@@ -1,6 +1,6 @@
 {
   "name": "@patagona-technologies/vivagraphjs",
-  "version": "0.10.6",
+  "version": "0.10.7",
   "description": "Graph Drawing Library",
   "main": "src/viva",
   "directories": {
@@ -44,6 +44,7 @@
     "ngraph.merge": "0.0.1",
     "ngraph.random": "0.0.1",
     "ngraph.tojson": "0.1.4",
+    "panzoom": "^8.4.0",
     "simplesvg": "0.0.10"
   }
 }

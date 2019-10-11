@@ -280,6 +280,13 @@ function webglGraphics(options) {
       updateTransformUniform();
     },
 
+    setTransform: function(x, y, scale) {
+      transform[12] = (2 * x) / width - 1;
+      transform[13] = 1 - (2 * y) / height;
+      transform[0] = scale;
+      transform[5] = scale;
+      updateTransformUniform();
+    },
     /**
      * Called by Viva.Graph.View.renderer to let concrete graphic output
      * provider prepare to render given link of the graph
@@ -458,7 +465,9 @@ function webglGraphics(options) {
         initCallback(graphicsRoot);
       }
     },
-
+    getCanvas: function() {
+      return graphicsRoot;
+    },
     /**
      * Called by Viva.Graph.View.renderer to let concrete graphic output
      * provider release occupied resources.

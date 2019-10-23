@@ -154,6 +154,7 @@ function webglInputEvents(webglGraphics) {
       lastFound = null,
       lastUpdate = 1,
       lastClickTime = +new Date(),
+      mouseDownTime = null,
       handleMouseMove = function(e) {
         invoke(mouseMoveCallback, [lastFound, e]);
         pos.x = e.clientX;
@@ -170,6 +171,12 @@ function webglInputEvents(webglGraphics) {
     window.addEventListener("resize", updateBoundRect);
     updateBoundRect();
 
+    root.addEventListener("mouseup", function(e) {
+      let currentTime = +new Date();
+      if (currentTime - mouseDownTime < 100) {
+        invoke(clickCallback, [null]);
+      }
+    });
     // mouse move inside container serves only to track mouse enter/leave events.
     root.addEventListener("mousemove", function(e) {
       if (mouseCapturedNode) {
@@ -203,6 +210,8 @@ function webglInputEvents(webglGraphics) {
     });
 
     root.addEventListener("mousedown", function(e) {
+      mouseDownTime = +new Date();
+
       var cancelBubble = false,
         args;
       updateBoundRect();
@@ -240,6 +249,7 @@ function webglInputEvents(webglGraphics) {
         var nodeAtClientPos = getNodeAtClientPos(pos);
         var sameNode = nodeAtClientPos === lastFound;
         args = [nodeAtClientPos || lastFound, e];
+
         if (args[0]) {
           window.document.onselectstart = prevSelectStart;
 

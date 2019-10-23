@@ -4,7 +4,7 @@
  **/
 
 var glUtils = require("./webgl.js");
-
+var geomUtils = require("../Utils/geometry.js");
 module.exports = webglLinkProgram;
 
 /**

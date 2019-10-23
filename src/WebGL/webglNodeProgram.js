@@ -34,8 +34,18 @@ function webglNodeProgram(node_type = "circle") {
     "void main(void) {",
     "   vec2 circCoord = 2.0 * gl_PointCoord - 1.0;",
     "   r = dot(circCoord, circCoord);",
+    "   if(r > 1.0) discard;",
+    "   outColor = color;",
+    "}"
+  ].join("\n");
+  var antialiasedCircleFSSnippet = [
+    "    float r = 0.0, delta = 0.0, alpha = 1.0;",
+    "void main(void) {",
+    "   vec2 circCoord = 2.0 * gl_PointCoord - 1.0;",
+    "   r = dot(circCoord, circCoord);",
     "   delta = fwidth(r);",
     "   alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, r);",
+    "   if(r == 1.0) discard;",
     "   outColor = color * alpha;",
     "}"
   ].join("\n");
@@ -47,7 +57,9 @@ function webglNodeProgram(node_type = "circle") {
     "}"
   ].join("\n");
 
-  if (node_type === "circle") {
+  if (node_type === "antialiasedCircle") {
+    var nodesFS = [FSPrefix, antialiasedCircleFSSnippet].join("\n");
+  } else if (node_type === "circle") {
     var nodesFS = [FSPrefix, circleFSSnippet].join("\n");
   } else if (node_type === "square") {
     var nodesFS = [FSPrefix, squareFSSnippet].join("\n");

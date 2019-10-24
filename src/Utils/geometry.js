@@ -14,11 +14,15 @@ module.exports = {
     var dir = {};
     var mid = {};
 
+    if (end.x < start.x) {
+      var tmp = start;
+      start = end;
+      end = tmp;
+    }
     dir.x = end.x - start.x;
     dir.y = end.y - start.y;
 
     var mag = this.magnitude(dir);
-    // var mag = Math.sqrt(dir.x * dir.x, dir.y * dir.y);
 
     dir.x = dir.x / mag;
     dir.y = dir.y / mag;

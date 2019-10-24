@@ -386,7 +386,8 @@ function renderer(graph, settings) {
         removeLinkUi(link);
       }
     } else if (change.changeType === "update") {
-      throw "Update type is not implemented. TODO: Implement me!";
+      removeLinkUi(link);
+      createLinkUi(link);
     }
   }
 

@@ -118,6 +118,7 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
         linkUi.level,
         curviness
       );
+
       // Shouldn't need to recompute bezier... Just scale, translate
       var dir = geomUtils.normalized_direction(ctrlPos, toPos);
       toPos.x = toPos.x - (dir.x * nodeSize) / 2;

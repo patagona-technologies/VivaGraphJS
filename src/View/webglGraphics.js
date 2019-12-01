@@ -435,6 +435,7 @@ function webglGraphics(options) {
       }
       if (options.depthBuffer) {
         gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
       }
 
       this.beginRender = function() {
@@ -496,6 +497,7 @@ function webglGraphics(options) {
      **/
     releaseLink: function(link) {
       var linkUI = allLinks[link.id];
+
       delete allLinks[link.id];
 
       var linkIdToRemove = linkUI.id;
@@ -564,7 +566,7 @@ function webglGraphics(options) {
       }
     },
 
-    renderNodes: function() {
+    positionNodes: function() {
       var pos = { x: 0, y: 0 };
       // WebGL coordinate system is different. Would be better
       // to have this transform in the shader code, but it would
@@ -581,11 +583,12 @@ function webglGraphics(options) {
       }
     },
 
-    renderLinks: function() {
+    positionLinks: function() {
       if (this.omitLinksRendering) {
         return;
       }
 
+      console.time("Position Straight links");
       // Draw Straight Links
       for (var i = 0; i < straightLinksCount; ++i) {
         var ui = straightLinks[i];
@@ -608,7 +611,8 @@ function webglGraphics(options) {
           allNodes[ui.toNodeId].size
         );
       }
-
+      console.timeEnd("Position Straight links");
+      console.time("Position Curved links");
       // Draw Curved Links
       for (var i = 0; i < curvedLinksCount; ++i) {
         var ui = curvedLinks[i];
@@ -631,6 +635,7 @@ function webglGraphics(options) {
           allNodes[ui.toNodeId].size
         );
       }
+      console.timeEnd("Position Curved links");
     },
 
     /**

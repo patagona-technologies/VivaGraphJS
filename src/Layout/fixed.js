@@ -106,9 +106,7 @@ function createLayout(graph, positions, settings) {
       nodes[nodeId].pos.y = y;
     },
 
-    dispose: function() {
-      return;
-    }
+    dispose: function() {}
   };
   /**
    * For a given `nodeId` returns position

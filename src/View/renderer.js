@@ -210,13 +210,17 @@ function renderer(graph, settings) {
     graphics.beginRender();
     // TODO: Don't render links and nodes after first render??
     // todo: move this check graphics
-
+    console.log("Begin Render");
     if (recompute) {
       // renderLinks and render Nodes only position vertices
       if (settings.renderLinks) {
-        graphics.renderLinks();
+        console.time("position Links");
+        graphics.positionLinks();
+        console.timeEnd("position Links");
       }
-      graphics.renderNodes();
+      console.time("position Nodes");
+      graphics.positionNodes();
+      console.timeEnd("position Nodes");
     }
     // End render actually renders
     graphics.endRender();
@@ -340,10 +344,14 @@ function renderer(graph, settings) {
   function initDom() {
     graphics.init(container);
 
+    console.time("Create Node UI");
     graph.forEachNode(createNodeUi);
+    console.timeEnd("Create Nodes");
 
     if (settings.renderLinks) {
+      console.time("Create Link UI");
       graph.forEachLink(createLinkUi);
+      console.timeEnd("Create Link UI");
     }
   }
 

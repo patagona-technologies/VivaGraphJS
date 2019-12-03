@@ -488,6 +488,12 @@ function webglGraphics(options) {
       return gl;
     },
 
+    resetStorage: function() {
+      straightLinkProgram.resetStorage();
+      curvedLinkProgram.resetStorage();
+      arrowProgram.resetStorage();
+      nodeProgram.resetStorage();
+    },
     /**
      * Called by Viva.Graph.View.renderer to let concrete graphic output
      * provider remove link from rendering surface.

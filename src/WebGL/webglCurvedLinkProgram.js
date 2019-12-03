@@ -63,6 +63,15 @@ function webglCurvedLinkProgram(curveResolution, curviness = 0.2) {
     tSampling = [...Array(SEGMENTS_PER_CURVE + 1).keys()].map(
       x => x / SEGMENTS_PER_CURVE
     ),
+      resetStorage = function () {
+        storage = new ArrayBuffer(16 * BYTES_PER_CURVE);
+        indicesStorage = new ArrayBuffer(
+          16 * Uint16Array.BYTES_PER_ELEMENT * 2 * SEGMENTS_PER_CURVE
+        );
+        indices = new Uint16Array(indicesStorage);
+        positions = new Float32Array(storage);
+        colors = new Uint32Array(storage);
+      },
     ensureEnoughStorage = function() {
       // TODO: this is a duplicate of webglNodeProgram code. Extract it to webgl.js
       if ((linksCount + 1) * BYTES_PER_CURVE > storage.byteLength) {

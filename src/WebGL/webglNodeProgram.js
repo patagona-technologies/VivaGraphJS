@@ -121,7 +121,15 @@ function webglNodeProgram(node_type = "circle") {
 
     replaceProperties: replaceProperties,
 
-    render: render
+    render: render,
+
+    resetStorage: resetStorage,
+  };
+
+  function resetStorage() {
+    var storage = new ArrayBuffer(16 * BYTES_PER_NODE);
+    var positions = new Float32Array(storage);
+    var colors = new Uint32Array(storage);
   };
 
   function ensureEnoughStorage() {

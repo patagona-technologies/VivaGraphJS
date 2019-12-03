@@ -51,7 +51,12 @@ function webglLinkProgram() {
     width,
     height,
     transform,
-    sizeDirty,
+      sizeDirty,
+      resetStorage = function () {
+        storage = new ArrayBuffer(16 * BYTES_PER_LINK);
+        positions = new Float32Array(storage);
+        colors = new Uint32Array(storage);
+      },
     ensureEnoughStorage = function() {
       // TODO: this is a duplicate of webglNodeProgram code. Extract it to webgl.js
       if ((linksCount + 1) * BYTES_PER_LINK > storage.byteLength) {

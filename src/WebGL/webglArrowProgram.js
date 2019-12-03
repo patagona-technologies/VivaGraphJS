@@ -52,7 +52,12 @@ function webglArrowProgram(curveResolution, curviness, arrowSize, pitch) {
     width,
     height,
     transform,
-    sizeDirty,
+      sizeDirty,
+      resetStorage = function() {
+        storage = new ArrayBuffer(16 * BYTES_PER_ARROW);
+        positions = new Float32Array(storage);
+        colors = new Uint32Array(storage);
+      },
     ensureEnoughStorage = function() {
       // TODO: this is a duplicate of webglNodeProgram code. Extract it to webgl.js
       if (arrowCount * BYTES_PER_ARROW > storage.byteLength) {

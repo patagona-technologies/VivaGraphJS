@@ -80,6 +80,7 @@ function webglLinkProgram() {
 
       program = utils.createProgram(linksVS, linksFS);
       gl.useProgram(program);
+
       locations = utils.getLocations(program, [
         "a_vertexPos",
         "a_color",

@@ -38,7 +38,8 @@ function webglInputEvents(webglGraphics) {
     click: click,
     dblClick: dblClick,
     mouseCapture: mouseCapture,
-    releaseMouseCapture: releaseMouseCapture
+    releaseMouseCapture: releaseMouseCapture,
+    dispose: dispose
   };
 
   // TODO I don't remember why this is needed:
@@ -46,6 +47,10 @@ function webglInputEvents(webglGraphics) {
 
   return api;
 
+  function dispose() {
+    releaseMouseCapture();
+    stopListen(root);
+  }
   function releaseMouseCapture() {
     mouseCapturedNode = null;
   }
@@ -160,6 +165,14 @@ function webglInputEvents(webglGraphics) {
         return true;
       }
     }
+  }
+
+  function stopListen(root) {
+    // console.log("stop listening");
+    // window.removeEventListener("mouseup");
+    // root.removeEventListener("mouedown");
+    // window.removeEventListener("mousemove");
+    // window.removeEventListener("resize", updateBoundRect, true);
   }
 
   function startListen(root) {

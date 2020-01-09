@@ -10,6 +10,7 @@ var webglInputManager = require("../Input/webglInputManager.js");
 var webglLinkProgram = require("../WebGL/webglLinkProgram.js");
 var webglCurvedLinkProgram = require("../WebGL/webglCurvedLinkProgram.js");
 var webglNodeProgram = require("../WebGL/webglNodeProgram.js");
+var webglDirectedNodeProgram = require("../WebGL/webglDirectedNodeProgram.js");
 var webglArrowProgram = require("../WebGL/webglArrowProgram.js");
 var webglSquare = require("../WebGL/webglSquare.js");
 var webglLine = require("../WebGL/webglLine.js");
@@ -41,119 +42,125 @@ function webglGraphics(options) {
     curveResolution: 10,
     curviness: 0.1,
     arrowSize: 20,
-    arrowPitch: Math.PI / 8
+    arrowPitch: Math.PI / 8,
+    directedNodes: false
   });
 
-  var container,
-    graphicsRoot,
-    gl,
-    width,
-    height,
-    nodesCount = 0,
-    straightLinksCount = 0,
-    curvedLinksCount = 0,
-    arrowCount = 0,
-    transform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    userPlaceNodeCallback,
-    userPlaceLinkCallback,
-    nodes = [],
-    straightLinks = [],
-    curvedLinks = [],
-    arrows = [],
-    initCallback,
-    allNodes = {},
-    allLinks = {},
-    straightLinkProgram = webglLinkProgram(),
-    curvedLinkProgram = webglCurvedLinkProgram(
-      options.curveResolution,
-      options.curviness
-    ),
-    arrowProgram = webglArrowProgram(
-      options.curveResolution,
-      options.curviness,
-      options.arrowSize,
-      options.arrowPitch
-    ),
-    nodeProgram = webglNodeProgram(),
-    /*jshint unused: false */
-    nodeUIBuilder = function(node) {
-      return webglSquare(); // Just make a square, using provided gl context (a nodeProgram);
-    },
-    linkUIBuilder = function(link) {
-      return webglLine(0xb3b3b3ff);
-    },
-    /*jshint unused: true */
-    updateTransformUniform = function() {
-      straightLinkProgram.updateTransform(transform);
-      nodeProgram.updateTransform(transform);
-      curvedLinkProgram.updateTransform(transform);
-      arrowProgram.updateTransform(transform);
-    },
-    resetScaleInternal = function() {
-      transform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-    },
-    updateSize = function() {
-      if (container && graphicsRoot) {
-        width = graphicsRoot.width = Math.max(container.offsetWidth, 1);
-        height = graphicsRoot.height = Math.max(container.offsetHeight, 1);
-        if (gl) {
-          gl.viewport(0, 0, width, height);
-        }
-        if (straightLinkProgram) {
-          straightLinkProgram.updateSize(width / 2, height / 2);
-        }
-        if (curvedLinkProgram) {
-          curvedLinkProgram.updateSize(width / 2, height / 2);
-        }
-        if (arrowProgram) {
-          arrowProgram.updateSize(width / 2, height / 2);
-        }
-        if (nodeProgram) {
-          nodeProgram.updateSize(width / 2, height / 2);
-        }
+  var container;
+  var graphicsRoot;
+  var gl;
+  var width;
+  var height;
+  var nodesCount = 0;
+  var straightLinksCount = 0;
+  var curvedLinksCount = 0;
+  var arrowCount = 0;
+  var transform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  var userPlaceNodeCallback;
+  var userPlaceLinkCallback;
+  var nodes = [];
+  var straightLinks = [];
+  var curvedLinks = [];
+  var arrows = [];
+  var initCallback;
+  var allNodes = {};
+  var allLinks = {};
+  var straightLinkProgram = webglLinkProgram();
+  var curvedLinkProgram = webglCurvedLinkProgram(
+    options.curveResolution,
+    options.curviness
+  );
+  var arrowProgram = webglArrowProgram(
+    options.curveResolution,
+    options.curviness,
+    options.arrowSize,
+    options.arrowPitch
+  );
+
+  if (options.directedNodes) {
+    var nodeProgram = webglDirectedNodeProgram();
+  } else {
+    var nodeProgram = webglNodeProgram();
+  }
+  /*jshint unused: false */
+  var nodeUIBuilder = function(node) {
+    return webglSquare(); // Just make a square, using provided gl context (a nodeProgram);
+  };
+  var linkUIBuilder = function(link) {
+    return webglLine(0xb3b3b3ff);
+  };
+  /*jshint unused: true */
+  var updateTransformUniform = function() {
+    straightLinkProgram.updateTransform(transform);
+    nodeProgram.updateTransform(transform);
+    curvedLinkProgram.updateTransform(transform);
+    arrowProgram.updateTransform(transform);
+  };
+  var resetScaleInternal = function() {
+    transform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  };
+  var updateSize = function() {
+    if (container && graphicsRoot) {
+      width = graphicsRoot.width = Math.max(container.offsetWidth, 1);
+      height = graphicsRoot.height = Math.max(container.offsetHeight, 1);
+      if (gl) {
+        gl.viewport(0, 0, width, height);
       }
-    },
-    fireRescaled = function(graphics) {
-      graphics.fire("rescaled");
-    },
-    flipLinkCoordinates = function(position) {
-      var toPos = { x: 0, y: 0 };
-      var fromPos = { x: 0, y: 0 };
+      if (straightLinkProgram) {
+        straightLinkProgram.updateSize(width / 2, height / 2);
+      }
+      if (curvedLinkProgram) {
+        curvedLinkProgram.updateSize(width / 2, height / 2);
+      }
+      if (arrowProgram) {
+        arrowProgram.updateSize(width / 2, height / 2);
+      }
+      if (nodeProgram) {
+        nodeProgram.updateSize(width / 2, height / 2);
+      }
+    }
+  };
+  var fireRescaled = function(graphics) {
+    graphics.fire("rescaled");
+  };
+  var flipLinkCoordinates = function(position) {
+    var toPos = { x: 0, y: 0 };
+    var fromPos = { x: 0, y: 0 };
 
-      var pos = position.from;
-      fromPos.x = pos.x;
-      fromPos.y = -pos.y;
-      pos = position.to;
-      toPos.x = pos.x;
-      toPos.y = -pos.y;
+    var pos = position.from;
+    fromPos.x = pos.x;
+    fromPos.y = -pos.y;
+    pos = position.to;
+    toPos.x = pos.x;
+    toPos.y = -pos.y;
 
-      return { fromPos: fromPos, toPos: toPos };
-    },
-    removeLinkFromList = function(links, linksCount, linkIdToRemove) {
-      if (linksCount > 0) {
-        linksCount -= 1;
+    return { fromPos: fromPos, toPos: toPos };
+  };
+  var removeLinkFromList = function(links, linksCount, linkIdToRemove) {
+    if (linksCount > 0) {
+      linksCount -= 1;
+    }
+
+    if (linkIdToRemove < linksCount) {
+      if (linksCount === 0 || linksCount === linkIdToRemove) {
+        return linksCount; // no more links or removed link is the last one.
       }
 
-      if (linkIdToRemove < linksCount) {
-        if (linksCount === 0 || linksCount === linkIdToRemove) {
-          return linksCount; // no more links or removed link is the last one.
-        }
+      var lastLinkUI = links[linksCount];
+      links[linkIdToRemove] = lastLinkUI;
+      lastLinkUI.id = linkIdToRemove;
+    }
+    return linksCount;
+  };
+  var swapElementsAndId = function(array, id1, id2) {
+    var temp = array[id1];
+    array[id1] = array[id2];
+    array[id1].id = id1;
+    array[id2] = temp;
+    array[id2].id = id2;
+  };
 
-        var lastLinkUI = links[linksCount];
-        links[linkIdToRemove] = lastLinkUI;
-        lastLinkUI.id = linkIdToRemove;
-      }
-      return linksCount;
-    },
-    swapElementsAndId = function(array, id1, id2) {
-      var temp = array[id1];
-      array[id1] = array[id2];
-      array[id1].id = id1;
-      array[id2] = temp;
-      array[id2].id = id2;
-    };
-
-  graphicsRoot = window.document.createElement("canvas");
+  var graphicsRoot = window.document.createElement("canvas");
 
   var graphics = {
     getLinkUI: function(linkId) {
@@ -297,9 +304,9 @@ function webglGraphics(options) {
       var ui = linkUIBuilder(link);
 
       /* 
-         Link level = 0 is a straight line
-         Link level > 0 is a curved line
-      */
+       Link level = 0 is a straight line
+       Link level > 0 is a curved line
+       */
       if (ui.level > 0) {
         var uiid = curvedLinksCount++;
       } else {
@@ -337,7 +344,7 @@ function webglGraphics(options) {
      *
      * @param nodeUI visual representation of the node created by node() execution.
      **/
-    addNode: function(node, boundPosition) {
+    addNode: function(node, boundPosition, gradient = null) {
       var uiid = nodesCount++,
         ui = nodeUIBuilder(node);
 
@@ -345,8 +352,11 @@ function webglGraphics(options) {
       ui.position = boundPosition;
       ui.node = node;
 
-      nodeProgram.createNode(ui);
+      if (gradient) {
+        ui.gradient = gradient;
+      }
 
+      nodeProgram.createNode(ui);
       nodes[uiid] = ui;
       allNodes[node.id] = ui;
 
@@ -409,7 +419,6 @@ function webglGraphics(options) {
         contextParameters.preserveDrawingBuffer = true;
       }
       container = c;
-
       updateSize();
       resetScaleInternal();
       container.appendChild(graphicsRoot);
@@ -639,6 +648,13 @@ function webglGraphics(options) {
       }
     },
 
+    getNodeStyle: function() {
+      if (options.directedNodes) {
+        return "directed";
+      } else {
+        return "dots";
+      }
+    },
     /**
      * Returns root element which hosts graphics.
      */
@@ -752,6 +768,28 @@ function webglGraphics(options) {
           return nodes[i].node;
         }
       }
+      return null;
+    },
+
+    getNodeNearestToClientPos: function(clientPos, distanceFunc) {
+      if (typeof distanceFunc !== "function") {
+        return null;
+      }
+      // first transform to graph coordinates:
+      this.transformClientToGraphCoordinates(clientPos);
+      // now using precise check iterate over each node and find one within box:
+      // TODO: This is poor O(N) performance.
+      var nearest = null;
+      var nearestDist = Infinity;
+      for (var i = 0; i < nodesCount; ++i) {
+        let dist = distanceFunc(nodes[i], clientPos.x, clientPos.y);
+
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearest = nodes[i].node;
+        }
+      }
+      if (nearest !== null) return nearest;
       return null;
     }
   };

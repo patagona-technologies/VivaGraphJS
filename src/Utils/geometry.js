@@ -50,7 +50,21 @@ module.exports = {
   magnitude(vec) {
     return Math.sqrt(vec.x * vec.x + vec.y * vec.y);
   },
+  gradient(from, to) {
+    var dir = {x: 0, y: 0};
+    dir.x = to.x - from.x;
+    dir.y = to.y - from.y;
 
+    var mag = this.magnitude(dir);
+    dir.x = dir.x / mag;
+    dir.y = dir.y / mag;
+
+    return {
+      direction: dir,
+      magnitude: mag
+    };
+
+  },
   // Compute normalized direction vector from p1 to p2
   normalized_direction(from, to) {
     var dir = { x: 0, y: 0 };

@@ -9,6 +9,7 @@ var timer = require("../Utils/timer.js");
 var getDimension = require("../Utils/getDimensions.js");
 var dragndrop = require("../Input/dragndrop.js");
 var makePanzoom = require("panzoom");
+var geometry = require("../Utils/geometry.js");
 /**
  * This is heart of the rendering. Class accepts graph to be rendered and rendering settings.
  * It monitors graph changes and depicts them accordingly.
@@ -202,6 +203,12 @@ function renderer(graph, settings) {
       settings.renderLinks = true;
     }
 
+    let nodeStyle = graphics.getNodeStyle();
+    if (nodeStyle === "directed") {
+      settings.directedNodes = true;
+    } else {
+      settings.directedNodes = false;
+    }
     settings.prerender = settings.prerender || 0;
     inputManager = (graphics.inputManager || domInputManager)(graph, graphics);
   }
@@ -274,16 +281,47 @@ function renderer(graph, settings) {
 
     var cx = (graphRect.x2 + graphRect.x1) / 2;
     var cy = (graphRect.y2 + graphRect.y1) / 2;
-    transform.offsetX = containerSize.width / 2 - (cx * transform.scale - cx);
+    transform.offsetXe = containerSize.width / 2 - (cx * transform.scale - cx);
     transform.offsetY = containerSize.height / 2 - (cy * transform.scale - cy);
     graphics.graphCenterChanged(transform.offsetX, transform.offsetY);
 
     updateCenterRequired = false;
   }
 
+  function computeNodeGradient(node) {
+    var magnitude = 0;
+    var orientation = 0;
+
+    var myPosition = layout.getNodePosition(node.id);
+
+    var averagePosition = { x: 0, y: 0 };
+    node.links.forEach(link => {
+      if (link.fromId !== node.id) {
+        var otherId = link.fromId;
+      } else {
+        var otherId = link.toId;
+      }
+      otherPosition = layout.getNodePosition(otherId);
+
+      averagePosition.x += otherPosition.x;
+      averagePosition.y += otherPosition.y;
+    });
+
+    averagePosition.x /= node.links.length;
+    averagePosition.y /= node.links.length;
+
+    return geometry.gradient(myPosition, averagePosition);
+  }
+
   function createNodeUi(node) {
     var nodePosition = layout.getNodePosition(node.id);
-    graphics.addNode(node, nodePosition);
+
+    if (settings.directedNodes) {
+      let gradient = computeNodeGradient(node);
+      graphics.addNode(node, nodePosition, gradient);
+    } else {
+      graphics.addNode(node, nodePosition);
+    }
   }
 
   function removeNodeUi(node) {
@@ -386,8 +424,10 @@ function renderer(graph, settings) {
         removeLinkUi(link);
       }
     } else if (change.changeType === "update") {
-      removeLinkUi(link);
-      createLinkUi(link);
+      if (settings.renderLinks) {
+        removeLinkUi(link);
+        createLinkUi(link);
+      }
     }
   }
 

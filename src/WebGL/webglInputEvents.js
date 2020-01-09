@@ -119,8 +119,24 @@ function webglInputEvents(webglGraphics) {
     return true;
   }
 
+  function distanceL1(nodeUI, x, y) {
+    if (nodeUI && nodeUI.size) {
+      var pos = nodeUI.position;
+      var half = nodeUI.size;
+      var dist = Math.abs(pos.x - x) + Math.abs(pos.y - y);
+      if (dist > half) return Infinity;
+      return dist;
+    }
+
+    return true;
+  }
+
   function getNodeAtClientPos(pos) {
     return webglGraphics.getNodeAtClientPos(pos, preciseCheck);
+  }
+
+  function getNodeNearestToClientPos(pos) {
+    return webglGraphics.getNodeNearestToClientPos(pos, distanceL1);
   }
 
   function stopPropagation(e) {
@@ -195,7 +211,6 @@ function webglInputEvents(webglGraphics) {
       pos.y = e.clientY - boundRect.top;
 
       node = getNodeAtClientPos(pos);
-
       if (node && lastFound !== node) {
         lastFound = node;
         cancelBubble = cancelBubble || invoke(mouseEnterCallback, [lastFound]);
@@ -218,7 +233,8 @@ function webglInputEvents(webglGraphics) {
       pos.x = e.clientX - boundRect.left;
       pos.y = e.clientY - boundRect.top;
 
-      args = [getNodeAtClientPos(pos), e];
+      args = [getNodeNearestToClientPos(pos), e];
+
       if (args[0]) {
         cancelBubble = invoke(mouseDownCallback, args);
         // we clicked on a node. Following drag should be handled on document events:
@@ -246,7 +262,8 @@ function webglInputEvents(webglGraphics) {
         pos.x = e.clientX - boundRect.left;
         pos.y = e.clientY - boundRect.top;
 
-        var nodeAtClientPos = getNodeAtClientPos(pos);
+        var nodeAtClientPos = getNodeNearestToClientPos(pos);
+
         var sameNode = nodeAtClientPos === lastFound;
         args = [nodeAtClientPos || lastFound, e];
 

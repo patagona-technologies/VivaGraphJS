@@ -217,17 +217,12 @@ function renderer(graph, settings) {
     graphics.beginRender();
     // TODO: Don't render links and nodes after first render??
     // todo: move this check graphics
-    console.log("Begin Render");
     if (recompute) {
       // renderLinks and render Nodes only position vertices
       if (settings.renderLinks) {
-        console.time("position Links");
         graphics.positionLinks();
-        console.timeEnd("position Links");
       }
-      console.time("position Nodes");
       graphics.positionNodes();
-      console.timeEnd("position Nodes");
     }
     // End render actually renders
     graphics.endRender();
@@ -299,21 +294,22 @@ function renderer(graph, settings) {
     var myPosition = layout.getNodePosition(node.id);
 
     var averagePosition = { x: 0, y: 0 };
-    node.links.forEach(link => {
-      if (link.fromId !== node.id) {
-        var otherId = link.fromId;
-      } else {
-        var otherId = link.toId;
-      }
-      otherPosition = layout.getNodePosition(otherId);
+    if (node.links) {
+      node.links.forEach(link => {
+        if (link.fromId !== node.id) {
+          var otherId = link.fromId;
+        } else {
+          var otherId = link.toId;
+        }
+        otherPosition = layout.getNodePosition(otherId);
 
-      averagePosition.x += otherPosition.x;
-      averagePosition.y += otherPosition.y;
-    });
+        averagePosition.x += otherPosition.x;
+        averagePosition.y += otherPosition.y;
+      });
 
-    averagePosition.x /= node.links.length;
-    averagePosition.y /= node.links.length;
-
+      averagePosition.x /= node.links.length;
+      averagePosition.y /= node.links.length;
+    }
     return geometry.gradient(myPosition, averagePosition);
   }
 

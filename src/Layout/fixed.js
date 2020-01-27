@@ -52,7 +52,6 @@ function createLayout(graph, positions, settings) {
       y: positions[node.id].y * height
     };
   };
-
   graph.forEachNode(initializePosition);
   graph.forEachNode(ensureNodeInitialized);
   graph.forEachLink(ensureLinkInitialized);
